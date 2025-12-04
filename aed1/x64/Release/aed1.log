@@ -1,0 +1,13 @@
+﻿C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(548,5): warning MSB8028: O diretório intermediário (x64\Release\) contém arquivos compartilhados de outro projeto (aed1.vcxproj). Isso pode levar a um comportamento incorreto de limpeza e recompilação.
+  main.cpp
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(172,29): warning C4018: '<': incompatibilidade de signed/unsigned
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(206,35): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(207,32): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(208,31): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(209,33): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(210,33): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+  Gerando código
+  Previous IPDB not found, fall back to full compilation.
+  All 890 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finalizada a geração de código
+  aed1.vcxproj -> C:\Users\perei\source\repos\aed1\x64\Release\EstacaoSK8.exe

@@ -1,0 +1,9 @@
+﻿C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(548,5): warning MSB8028: O diretório intermediário (x64\Debug\) contém arquivos compartilhados de outro projeto (aed1.vcxproj). Isso pode levar a um comportamento incorreto de limpeza e recompilação.
+  main.cpp
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(172,29): warning C4018: '<': incompatibilidade de signed/unsigned
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(206,35): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(207,32): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(208,31): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(209,33): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+C:\Users\perei\source\repos\aed1\aed1\main.cpp(210,33): warning C4834: descartando o valor retornado da função com o atributo [[nodiscard]]
+  aed1.vcxproj -> C:\Users\perei\source\repos\aed1\x64\Debug\EstacaoSK8.exe

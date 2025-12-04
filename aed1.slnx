@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="aed1/aed1.vcxproj" Id="a8aaad0b-fe08-487b-9205-9498b5ff2774" />
+</Solution>
