@@ -14,13 +14,14 @@
 #include <fstream>
 #include <algorithm>
 #include <random>
+#include <functional> 
 
 using namespace sf;
 using namespace std;
 
 constexpr double PI_CONST = 3.14159265358979323846;
 
-// Heap binário
+// Heap binário simples (agora configurado como Min-Heap para Dijkstra)
 template<typename T, typename Compare = less<T>>
 class BinaryHeap {
     vector<T> data;
@@ -35,17 +36,17 @@ private:
     void siftUp(size_t i) {
         while (i > 0) {
             size_t p = (i - 1) / 2;
-            if (!comp(data[p], data[i])) break;
+            if (!comp(data[i], data[p])) break;
             swap(data[p], data[i]); i = p;
         }
     }
     void siftDown(size_t i) {
         for (;;) {
-            size_t l = 2 * i + 1, r = 2 * i + 2, largest = i;
-            if (l < data.size() && comp(data[l], data[largest])) largest = l;
-            if (r < data.size() && comp(data[r], data[largest])) largest = r;
-            if (largest == i) break;
-            swap(data[i], data[largest]); i = largest;
+            size_t l = 2 * i + 1, r = 2 * i + 2, smallest = i;
+            if (l < data.size() && comp(data[l], data[smallest])) smallest = l;
+            if (r < data.size() && comp(data[r], data[smallest])) smallest = r;
+            if (smallest == i) break;
+            swap(data[i], data[smallest]); i = smallest;
         }
     }
 };
@@ -230,6 +231,7 @@ class Game {
     int phase{ 1 };
     int mazeSize{ 5 };
     int px{ 0 }, py{ 0 };
+    int ex{ 0 }, ey{ 0 };
     int score{ 0 };
     int totalScore{ 0 };
     int scoreAtPhaseStart{ 0 };
@@ -263,6 +265,8 @@ class Game {
 
     float exitMoveTimer{ 0.f };
     float exitMoveInterval{ 9999.f };
+
+    float enemyTimer{ 0.f };
 
 public:
     Game() {
@@ -301,7 +305,7 @@ private:
         vector<vector<int>> dist(W, vector<int>(H, INF));
         vector<vector<pair<int, int>>> parent(W, vector<pair<int, int>>(H, { -1,-1 }));
 
-        BinaryHeap<CellScore, greater<CellScore>> pq;
+        BinaryHeap<CellScore, less<CellScore>> pq;
 
         dist[sx][sy] = 0;
         pq.push({ sx, sy, 0 });
@@ -351,7 +355,6 @@ private:
     }
 
     void triggerTrapRoom() {
-        int ex = -1, ey = -1;
         for (int i = 0;i < maze.w;++i) for (int j = 0;j < maze.h;++j) if (maze.grid[i][j].isExit) { ex = i; ey = j; }
         int extraPaths = min(phase, 5);
         maze.generate(maze.w, maze.h, extraPaths);
@@ -380,6 +383,7 @@ private:
         overlayAlpha = 200.f;
         exitMoveInterval = max(0.25f, 1.5f - 0.15f * (phase - 1));
         scoreAtPhaseStart = score;
+        for (int i = 0;i < maze.w;++i) for (int j = 0;j < maze.h;++j) if (maze.grid[i][j].isExit) { ex = i; ey = j; }
     }
 
     void processEvents() {
@@ -482,6 +486,19 @@ private:
         if (!gameOver) {
             Time el = clockGame.getElapsedTime(); timeLeft = max(0, (int)(totalTime.asSeconds() - el.asSeconds()));
             if (timeLeft <= 0) { gameOver = true; playerAlive = false; if (audio.sTrap) audio.sTrap->play(); startPhase(1); }
+            if (playerAlive && !minigameActive) {
+                enemyTimer += dt;
+                if (enemyTimer >= 0.35f) {
+                    enemyTimer = 0.f;
+                    vector<pair<int, int>> path = findPath(ex, ey, px, py);
+                    if (path.size() > 1) { ex = path[1].first; ey = path[1].second; }
+                    if (ex == px && ey == py) {
+                        gameOver = true; playerAlive = false;
+                        if (audio.sTrap) audio.sTrap->play();
+                        startPhase(1);
+                    }
+                }
+            }
         }
         if (minigameActive) { minigameTimeLeft -= dt; if (minigameTimeLeft <= 0.f) { maze.grid[px][py].treasure = false; maze.grid[px][py].treasureLocked = false; maze.grid[px][py].treasureUnlocked = false; maze.grid[px][py].bonus = false; pickupsActive = false; currentPickups.clear(); minigameActive = false; } }
         if (minigameActive) {
@@ -594,6 +611,16 @@ private:
                 window.draw(circ);
             }
         }
+
+        // draw enemy
+        float ecx = mapPos.x + ex * cell + cell * 0.5f;
+        float ecy = mapPos.y + ey * cell + cell * 0.5f;
+        float er = max(1.f, cell * 0.3f);
+        CircleShape enemyShape(er);
+        enemyShape.setOrigin(Vector2f(er, er));
+        enemyShape.setPosition(Vector2f(ecx, ecy));
+        enemyShape.setFillColor(Color::Red);
+        window.draw(enemyShape);
 
         for (int i = 0;i < w;++i) for (int j = 0;j < h;++j) { float x0 = mapPos.x + i * cell, y0 = mapPos.y + j * cell; if (maze.grid[i][j].walls[0]) { RectangleShape line(Vector2f(cell, max(1.f, cell * 0.08f))); line.setPosition(Vector2f(x0, y0)); line.setFillColor(Color::White); window.draw(line); } if (maze.grid[i][j].walls[1]) { RectangleShape line(Vector2f(max(1.f, cell * 0.08f), cell)); line.setPosition(Vector2f(x0 + cell - max(1.f, cell * 0.08f), y0)); line.setFillColor(Color::White); window.draw(line); } if (maze.grid[i][j].walls[2]) { RectangleShape line(Vector2f(cell, max(1.f, cell * 0.08f))); line.setPosition(Vector2f(x0, y0 + cell - max(1.f, cell * 0.08f))); line.setFillColor(Color::White); window.draw(line); } if (maze.grid[i][j].walls[3]) { RectangleShape line(Vector2f(max(1.f, cell * 0.08f), cell)); line.setPosition(Vector2f(x0, y0)); line.setFillColor(Color::White); window.draw(line); } }
     }
