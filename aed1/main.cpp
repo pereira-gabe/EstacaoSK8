@@ -20,7 +20,7 @@ using namespace std;
 
 constexpr double PI_CONST = 3.14159265358979323846;
 
-// Heap binário simples (max-heap por padrão)
+// Heap binÃ¡rio
 template<typename T, typename Compare = less<T>>
 class BinaryHeap {
     vector<T> data;
@@ -42,15 +42,19 @@ private:
     void siftDown(size_t i) {
         for (;;) {
             size_t l = 2 * i + 1, r = 2 * i + 2, largest = i;
-            if (l < data.size() && comp(data[largest], data[l])) largest = l;
-            if (r < data.size() && comp(data[largest], data[r])) largest = r;
+            if (l < data.size() && comp(data[l], data[largest])) largest = l;
+            if (r < data.size() && comp(data[r], data[largest])) largest = r;
             if (largest == i) break;
             swap(data[i], data[largest]); i = largest;
         }
     }
 };
 
-struct CellScore { int x, y, score; bool operator<(const CellScore& o) const { return score < o.score; } };
+struct CellScore {
+    int x, y, score;
+    bool operator>(const CellScore& o) const { return score > o.score; }
+    bool operator<(const CellScore& o) const { return score < o.score; }
+};
 
 struct Cell {
     bool walls[4];
@@ -183,7 +187,7 @@ public:
     }
 };
 
-// Gerenciador de áudio - gera sons
+// Gerenciador de Ã¡udio - gera sons
 class AudioManager {
 public:
     SoundBuffer bufCollect, bufTrap, bufWin, bufDecoy, bufStart;
@@ -293,19 +297,48 @@ private:
         vector<pair<int, int>> empty;
         if (sx == tx && sy == ty) return { {sx,sy} };
         int W = maze.w, H = maze.h;
-        vector<vector<bool>> vis(W, vector<bool>(H, false));
+        const int INF = 1e9;
+        vector<vector<int>> dist(W, vector<int>(H, INF));
         vector<vector<pair<int, int>>> parent(W, vector<pair<int, int>>(H, { -1,-1 }));
-        queue<pair<int, int>> q;
-        q.push({ sx,sy }); vis[sx][sy] = true;
-        while (!q.empty()) {
-            auto [x, y] = q.front(); q.pop();
+
+        BinaryHeap<CellScore, greater<CellScore>> pq;
+
+        dist[sx][sy] = 0;
+        pq.push({ sx, sy, 0 });
+
+        while (!pq.empty()) {
+            CellScore current = pq.top();
+            pq.pop();
+            int x = current.x;
+            int y = current.y;
+            int d = current.score;
+
+            if (d > dist[x][y]) continue;
             if (x == tx && y == ty) break;
-            if (!maze.grid[x][y].walls[0] && y > 0 && !vis[x][y - 1]) { vis[x][y - 1] = true; parent[x][y - 1] = { x,y }; q.push({ x,y - 1 }); }
-            if (!maze.grid[x][y].walls[1] && x + 1 < W && !vis[x + 1][y]) { vis[x + 1][y] = true; parent[x + 1][y] = { x,y }; q.push({ x + 1,y }); }
-            if (!maze.grid[x][y].walls[2] && y + 1 < H && !vis[x][y + 1]) { vis[x][y + 1] = true; parent[x][y + 1] = { x,y }; q.push({ x,y + 1 }); }
-            if (!maze.grid[x][y].walls[3] && x > 0 && !vis[x - 1][y]) { vis[x - 1][y] = true; parent[x - 1][y] = { x,y }; q.push({ x - 1,y }); }
+
+            int dx[] = { 0, 1, 0, -1 };
+            int dy[] = { -1, 0, 1, 0 };
+            int wallIndex[] = { 0, 1, 2, 3 };
+
+            for (int i = 0; i < 4; ++i) {
+                if (!maze.grid[x][y].walls[wallIndex[i]]) {
+                    int nx = x + dx[i];
+                    int ny = y + dy[i];
+
+                    if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
+                        int newDist = d + 1;
+                        if (newDist < dist[nx][ny]) {
+                            dist[nx][ny] = newDist;
+                            parent[nx][ny] = { x, y };
+                            pq.push({ nx, ny, newDist });
+                        }
+                    }
+                }
+            }
         }
-        if (!vis[tx][ty]) return empty;
+
+        if (dist[tx][ty] == INF) return empty;
+
         vector<pair<int, int>> path;
         pair<int, int> cur = { tx,ty };
         while (!(cur.first == -1 && cur.second == -1)) {
@@ -474,7 +507,7 @@ private:
         RectangleShape topBar(Vector2f((float)window.getSize().x, 60.f)); topBar.setFillColor(Color(20, 18, 28)); window.draw(topBar);
         if (fontLoaded) {
             Text title(font, "ESTACAO SK-8 - RETRO ARCADE", 20); title.setFillColor(Color(180, 210, 240)); title.setPosition(Vector2f(14.f, 14.f)); window.draw(title);
-            // área HUD abaixo do cabeçalho
+            // Ã¡rea HUD abaixo do cabeÃ§alho
             Text s1(font, string("Fase: ") + to_string(phase), 16); s1.setFillColor(Color::White); s1.setPosition(Vector2f(14.f, 66.f)); window.draw(s1);
             Text s2(font, string("Pontos: ") + to_string(score), 16); s2.setFillColor(Color::White); s2.setPosition(Vector2f(140.f, 66.f)); window.draw(s2);
             Text s3(font, string(" Tempo: ") + to_string(timeLeft) + "s", 16); s3.setFillColor(Color::White); s3.setPosition(Vector2f(300.f, 66.f)); window.draw(s3);
@@ -511,7 +544,7 @@ private:
     }
 
     void drawFirstPersonAndMap() {
-        // área de visão e minimapa (responsive sizes)
+        // Ã¡rea de visÃ£o e minimapa (responsive sizes)
         float side = getViewSide(); float spacing = getViewSpacing(); float totalWidth = side * 2 + spacing; float left = ((float)window.getSize().x - totalWidth) / 2.f;
         Vector2f viewPos(left, ((float)window.getSize().y - side) / 2.f);
         RectangleShape roomBox(Vector2f(side, side)); roomBox.setPosition(viewPos); roomBox.setFillColor(Color(36, 40, 56)); roomBox.setOutlineColor(Color::White); roomBox.setOutlineThickness(2.f); window.draw(roomBox);
@@ -593,7 +626,7 @@ private:
             if (maze.grid[px][py].isExit) {
                 int phasePoints = score - scoreAtPhaseStart;
                 phaseScores.push_back(phasePoints);
-                totalScore = score; // cumulative
+                totalScore = score; // cumulativo
                 if (phase < 6) startPhase(phase + 1);
                 else {
                     won = true; gameOver = true; playerAlive = false;
